@@ -62,5 +62,5 @@ export async function verifyLogin(
 }
 
 export async function getUsers() {
-    return prisma.user.findMany({ select: { id: true, email: true } });
+  return prisma.user.findMany({ select: { id: true, email: true } });
 }
