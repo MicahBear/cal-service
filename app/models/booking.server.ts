@@ -18,10 +18,34 @@ export function getBooking({
     });
 }
 
-// get all bookings
+// get all booking items
 
 export function getBookingItems({userId}: {userId: User['id']}){
     return getEnhancedPrisma(userId).booking.findMany({
         orderBy: {updatedAt:'desc'},
+    })
+}
+
+export function createBooking({
+    userId,
+    email,
+    notes,
+    startAt,
+    duration,
+}: Pick<Booking,'email' | 'notes'| 'startAt' | 'duration'> & {
+    userId: User['id'];
+}){
+    return getEnhancedPrisma(userId).booking.create({
+        data:{
+            email,
+            notes,
+            startAt,
+            duration,
+            user: {
+                connect:{
+                    id:userId,
+                },
+            },
+        },
     })
 }
