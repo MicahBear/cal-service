@@ -1,4 +1,11 @@
 import { PrismaClient } from "@prisma/client";
+import { withPresets } from "@zenstackhq/runtime";
+
+export function getEnhancedPrisma(userId: string){
+  // withPresets configures a regular Prisma client for access policy checks
+ return withPresets(prisma,{user:{ id: userId}})
+
+}
 
 let prisma: PrismaClient;
 
