@@ -60,3 +60,7 @@ export async function verifyLogin(
 
   return userWithoutPassword;
 }
+
+export async function getUsers() {
+    return prisma.user.findMany({ select: { id: true, email: true } });
+}
