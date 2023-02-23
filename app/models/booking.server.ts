@@ -49,3 +49,53 @@ export function createBooking({
         },
     })
 }
+
+// Adds or removes an invitation of a booking
+export function updateInvite({
+    userId,
+    bookingId,
+    inviteUserId,
+    add,
+}: {
+    userId: User['id'];
+    bookingId: Booking['id'];
+    inviteUserId: User['id'];
+    add: boolean;
+}) {
+    return getEnhancedPrisma(userId).booking.update({
+        where: { id: bookingId },
+        include: { invitedUsers: true },
+        data: {
+            invitedUsers: add
+                ? {
+                      connectOrCreate: {
+                          where: {
+                              bookingId_userId: {
+                                  bookingId,
+                                  userId: inviteUserId,
+                              },
+                          },
+                          create: {
+                              user: {
+                                  connect: { id: inviteUserId },
+                              },
+                          },
+                      },
+                  }
+                : {
+                      delete: {
+                          bookingId_userId: {
+                              bookingId,
+                              userId: inviteUserId,
+                          },
+                      },
+                  },
+        },
+    });
+}
+// Deletes a booking
+export function deleteBooking({ id, userId }: Pick<Booking, 'id'> & { userId: User['id'] }) {
+    return getEnhancedPrisma(userId).booking.delete({
+        where: { id },
+    });
+}
