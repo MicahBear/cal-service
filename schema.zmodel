@@ -16,6 +16,8 @@ model User {
 
   password Password?
   notes    Note[]
+  invitations InvitedUser[]
+  bookings Booking[]
 }
 
 model Password {
@@ -36,3 +38,36 @@ model Note {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
 }
+
+model Booking{
+    id           String   @id() @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  email        String
+  notes        String
+  startAt      DateTime
+  duration     Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  invitedUsers InvitedUser[]
+  // allow everyone to create a booking, including anonymous users
+  @@allow('create', true)
+  // owner is allowed for full CRUD
+  @@allow('all', auth() == user)
+  // invited users can read the booking
+  @@allow('read', invitedUsers?[user == auth()])
+}
+
+model InvitedUser {
+  id          String @id() @default(cuid())
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  booking     Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId   String
+  @@unique([bookingId, userId])
+  // allow everyone to create an invitation, disallow create for self
+  @@allow('create', auth() != null && user != auth())
+  // booking's owner is allowed for full CRUD
+  @@allow('all', booking.user == auth())
+}
+
