@@ -1,74 +1,77 @@
-import { ActionArgs, json, LoaderArgs, redirect } from '@remix-run/node'
-import { Form, useFetcher, useLoaderData } from '@remix-run/react'
-import invariant from 'tiny-invariant'
-import { deleteBooking, getBooking, updateInvite } from '~/models/booking.server'
-import { getUsers } from '~/models/user.server'
-import { requireUserId } from '~/session.server'
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
+import { Form, useFetcher, useLoaderData } from '@remix-run/react';
+import invariant from 'tiny-invariant';
+import { deleteBooking, getBooking, updateInvite } from '~/models/booking.server';
+import { getUsers } from '~/models/user.server';
+import { requireUserId } from '~/session.server';
 
-export async function loader({request,params}: LoaderArgs){
+export async function loader({ request, params }: LoaderArgs) {
     const userId = await requireUserId(request);
     invariant(params.bookingId, 'bookingId not found');
 
-    const booking = await getBooking({userId, id: params.bookingId});
-    if(!booking){
-        throw new Response('Not Found', {status:404});
+    const booking = await getBooking({ userId, id: params.bookingId });
+    if (!booking) {
+        throw new Response('Not Found', { status: 404 });
     }
+
     const users = await getUsers();
 
-    return json({booking,users});
+    return json({ booking, users });
 }
 
-async function updateInviteAction({request}: ActionArgs){
-     const userId = await requireUserId(request);
-     const formData = await request.formData();
-     const bookingId = formData.get('bookingId') as string;
-     const inviteUserId = formData.get('inviteUserId') as string;
-     const add = formData.get('add') === 'true';
+async function updateInviteAction({ request }: ActionArgs) {
+    const userId = await requireUserId(request);
+    const formData = await request.formData();
+    const bookingId = formData.get('bookingId') as string;
+    const inviteUserId = formData.get('inviteUserId') as string;
+    const add = formData.get('add') === 'true';
 
-     try {
+    try {
         await updateInvite({
             userId,
             bookingId,
             inviteUserId,
             add,
         });
-        return json({error:null, ok: true})
-     } catch (error: any) {
-        return json({error: error.message, ok: false});
-     }
+        return json({ error: null, ok: true });
+    } catch (error: any) {
+        return json({ error: error.message, ok: false });
+    }
 }
 
-
-async function deleteAction({request,params}: ActionArgs){
+async function deleteAction({ request, params }: ActionArgs) {
     const userId = await requireUserId(request);
     invariant(params.bookingId, 'bookingId not found');
-    await deleteBooking({userId, id: params.bookingId});
+    await deleteBooking({ userId, id: params.bookingId });
     return redirect('/booking');
 }
 
-export async function action(args: ActionArgs){
-    if (args.request.method === 'POST'){
-        return updateInviteAction(args)
-    }else if(args.request.method === 'DELETE'){
+export async function action(args: ActionArgs) {
+    if (args.request.method === 'POST') {
+        return updateInviteAction(args);
+    } else if (args.request.method === 'DELETE') {
         return deleteAction(args);
     }
 }
 
-export default function BookingDetailsPage(){
+export default function BookingDetailsPage() {
     const data = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
-    function onChangeInvite(inviteUserId: string, add: boolean){
+
+    function onChangeInvite(inviteUserId: string, add: boolean) {
         fetcher.submit(
             {
                 bookingId: data.booking.id,
                 inviteUserId,
                 add: add.toString(),
             },
-            {method: 'post'}
-            );
+            { method: 'post' }
+        );
     }
-    return(
-         <div>
+
+    return (
+        <div>
             <h3 className="text-2xl font-bold">{data.booking.email}</h3>
             <div className="flex flex-col gap-4 py-6">
                 <div>
@@ -89,6 +92,7 @@ export default function BookingDetailsPage(){
                 </div>
                 <div>
                     <p className="font-semibold">Invited Members</p>
+
                     <div className="flex flex-col gap-1">
                         {data.users
                             .filter((user) => user.id !== data.booking.user.id)
@@ -116,5 +120,5 @@ export default function BookingDetailsPage(){
                 </button>
             </Form>
         </div>
-    )
+    );
 }
